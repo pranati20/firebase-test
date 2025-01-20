@@ -2,6 +2,7 @@
   "expo": {
     "name": "TurfPass",
     "slug": "TurfPass",
+    "main": "expo-router/entry",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -19,7 +20,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.pranatisattarapu.TurfPass"
     },
     "web": {
       "bundler": "metro",
@@ -27,10 +29,26 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "1a5586b6-671b-488d-a6f9-6ae44c506c69"
+      }
     }
   }
 }

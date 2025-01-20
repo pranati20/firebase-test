@@ -1,9 +1,11 @@
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions, PixelRatio } from 'react-native';
 import React from 'react';
 import { Colors } from '@/constants/Colors';
+import { useNavigation } from '@react-navigation/native';
 
 const Welcome = () => {
   const { width, height } = Dimensions.get('window');
+  const navigation = useNavigation();
 
   return (
     <View style={styles.mainContainer}>
@@ -13,14 +15,11 @@ const Welcome = () => {
         accessible={true}
         accessibilityLabel="Brand Logo"
       />
-      {/* <Text style={styles.mainText}>
-        The Best Sporting Experience
-      </Text> */}
       <View style={[styles.container, { height: height * 0.40 }]}>
-        <TouchableOpacity style={styles.loginButton}>
+        <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate('LoginInitial')}>
           <Text style={styles.loginButtonText}>Login</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.signUpButton}>
+        <TouchableOpacity style={styles.signUpButton} onPress={() => navigation.navigate('Login')}>
           <Text style={styles.signUpButtonText}>Sign Up</Text>
         </TouchableOpacity>
       </View>
@@ -43,12 +42,6 @@ const styles = StyleSheet.create({
     height: '48%', // Use percentages to make it responsive
     resizeMode: 'contain',
   },
-  // mainText: {
-  //   fontFamily: 'dmsans_regular',
-  //   fontSize: PixelRatio.get() * 5, // Scalable font size
-  //   marginTop: -100,
-  //   marginLeft: 50,
-  // },
   container: {
     position: 'absolute',
     bottom: 0,
@@ -73,7 +66,6 @@ const styles = StyleSheet.create({
     color: 'black',
     fontFamily: 'poppins_medium',
     fontSize: PixelRatio.get() * 10, // Scalable font size
-    // fontWeight: 'bold',
   },
   signUpButton: {
     height: 71,
@@ -90,6 +82,5 @@ const styles = StyleSheet.create({
     color: '#FFFF00',
     fontFamily: 'poppins_medium',
     fontSize: PixelRatio.get() * 10, // Scalable font size
-    // fontWeight: 'bold',
   },
 });

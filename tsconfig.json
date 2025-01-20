@@ -1,17 +1,27 @@
 {
-  "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "jsx": "react",
     "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"
       ]
     }
   },
+  "exclude": [
+    "node_modules"
+  ],
+  "extends": "expo/tsconfig.base",
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-, "components/Welcome.jsx"  ]
+, "../turfpass-owner/app/index.tsx", "../turfpass-owner/app/_layout.tsx"  ]
 }

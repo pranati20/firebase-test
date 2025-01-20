@@ -1,22 +1,72 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Dimensions, PixelRatio, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+//signup 
+
+import React, { useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+  PixelRatio,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  Alert,
+} from 'react-native';
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+// import Recaptcha from 'react-native-recaptcha-that-works';
+
+import { getAuth, signInWithPhoneNumber, signInWithCredential, PhoneAuthProvider } from '@firebase/auth';
+import { firebaseConfig } from '../firebaseConfig';
 import { Colors } from '@/constants/Colors';
+import { useNavigation } from '@react-navigation/native';
 
 const Login = () => {
   const { width, height } = Dimensions.get('window');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [verificationId, setVerificationId] = useState(null);
+  const [otp, setOtp] = useState('');
+  const recaptchaVerifier = useRef(null);
+  const auth = getAuth();
+  const navigation = useNavigation();
 
-  const handleSendOTP = () => {
+  const handleSendOTP = async () => {
     if (!phoneNumber || phoneNumber.length < 10) {
-      alert("Please enter a valid phone number.");
+      Alert.alert('Error', 'Please enter a valid phone number.');
       return;
     }
-    Keyboard.dismiss();
-    console.log('Sending OTP to', phoneNumber);
+
+    try {
+      Keyboard.dismiss();
+      const confirmation = await signInWithPhoneNumber(auth, `+${phoneNumber}`, recaptchaVerifier.current);
+      setVerificationId(confirmation.verificationId);
+      console.log('Verification ID:', confirmation.verificationId);
+      Alert.alert('Success', 'OTP has been sent!');
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+      Alert.alert('Error', error.message);
+    }
   };
 
-  const handleSignUp = () => {
-    console.log('Navigate to Signup screen');
+  const handleVerifyOTP = async () => {
+    if (!otp || !verificationId) {
+      Alert.alert('Error', 'Please enter the OTP received.');
+      return;
+    }
+
+    try {
+      console.log('Verification ID:', verificationId);
+      console.log('OTP:', otp);
+      const credential = PhoneAuthProvider.credential(verificationId, otp);
+      await signInWithCredential(auth, credential);
+      Alert.alert('Success', 'Phone number verified successfully!');
+      navigation.navigate('Signup'); // Ensure you have `useNavigation` from `@react-navigation/native` properly set up
+    } catch (error) {
+      console.error('Error verifying OTP:', error);
+      Alert.alert('Error', 'Invalid OTP. Please try again.');
+    }
   };
 
   return (
@@ -24,6 +74,10 @@ const Login = () => {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <FirebaseRecaptchaVerifierModal
+        ref={recaptchaVerifier}
+        firebaseConfig={firebaseConfig || DEFAULT_FIREBASE_CONFIG}
+      />
       <View style={styles.mainContainer}>
         <Image
           source={require("./../assets/images/logo_small.png")}
@@ -34,29 +88,48 @@ const Login = () => {
         />
 
         <View style={[styles.container, { height: height * 0.65 }]}>
-          <Text style={styles.loginText}>Login</Text>
+          <Text style={styles.loginText}>Sign Up</Text>
 
           <View style={styles.inputWrapper}>
-            <Text style={styles.registeredText}>REGISTERED PHONE NUMBER</Text>
+            <Text style={styles.registeredText}>REGISTERED PHONE NUMBER               (with Country Code)</Text>
             <TextInput
               style={styles.inputBox}
               placeholder="Enter your phone number"
               keyboardType="phone-pad"
               value={phoneNumber}
-              onChangeText={setPhoneNumber}
+              onChangeText={setPhoneNumber} 
             />
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleSendOTP}>
-            <Text style={styles.buttonText}>Send OTP</Text>
-          </TouchableOpacity>
+          {verificationId ? (
+            <>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.registeredText}>ENTER OTP</Text>
+                <TextInput
+                  style={styles.inputBox}
+                  placeholder="Enter OTP"
+                  keyboardType="number-pad"
+                  value={otp}
+                  onChangeText={setOtp}
+                />
+              </View>
 
-          <View style={styles.signupContainer}>
+              <TouchableOpacity style={styles.button} onPress={handleVerifyOTP}>
+                <Text style={styles.buttonText}>Verify OTP</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity style={styles.button} onPress={handleSendOTP}>
+              <Text style={styles.buttonText}>Send OTP</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* <View style={styles.signupContainer}>
             <Text style={styles.signupText}>Don’t have an Account? </Text>
-            <TouchableOpacity onPress={handleSignUp}>
+            <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
               <Text style={styles.signupLink}>signup</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -68,7 +141,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFF'
+    backgroundColor: '#FFF',
   },
   image: {
     position: 'absolute',
@@ -122,7 +195,7 @@ const styles = StyleSheet.create({
     width: '65%',
     height: '15%',
     backgroundColor: Colors.primary,
-    paddingTop:'2%',
+    paddingTop: '2%',
     paddingBottom: '2%',
     borderRadius: 25,
     justifyContent: 'center',
@@ -147,7 +220,6 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: 14,
     fontFamily: 'poppins_medium',
-    // textDecorationLine: 'underline',
   },
 });
 

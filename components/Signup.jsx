@@ -1,196 +1,291 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Dimensions, PixelRatio, KeyboardAvoidingView, Platform, Keyboard, Alert } from 'react-native';
-import { Colors } from '@/constants/Colors';
+import React, { useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  Modal,
+  ScrollView,
+} from "react-native";
+import { Colors } from "@/constants/Colors";
+import { db } from "../firebaseConfig"; // Import Firestore
+import { collection, addDoc } from "firebase/firestore";
+import { useNavigation } from "@react-navigation/native"; // Import navigation hook
+
+
+const { height } = Dimensions.get("window");
 
 const Signup = () => {
-  const { width, height } = Dimensions.get('window');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [name, setName] = useState("");
+  const [aadhaar, setAadhaar] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState(""); // Added email
+  const [password, setPassword] = useState(""); // Added password
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const handleSendOTP = () => {
-    if (!name || !email || !phoneNumber || phoneNumber.length < 10) {
-      setErrorMessage("Please fill out all fields correctly.");
+  const validateAadhaar = useCallback((aadhaar) => /^[A-Za-z0-9]{12}$/.test(aadhaar), []);
+  const validatePhoneNumber = useCallback((phone) => /^[0-9]{10}$/.test(phone), []);
+  const validateEmail = useCallback((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email), []);
+  const validatePassword = useCallback((password) => password.length >= 6, []);
+  const navigation = useNavigation(); 
+  const handleSendOTP = async () => {
+    if (!name || !validateAadhaar(aadhaar) || !validatePhoneNumber(phoneNumber) || !validateEmail(email) || !validatePassword(password)) {
+      setErrorMessage(
+        "Please provide valid details: Name, Aadhaar (12 alphanumeric), Phone Number, Email, and Password (min 6 characters)."
+      );
+      setIsModalVisible(true);
       return;
     }
-    Keyboard.dismiss();
-    console.log('Sending OTP to', phoneNumber);
+    const fullPhoneNumber = `91${phoneNumber}`;
+
+    try {
+      const docRef = await addDoc(collection(db, "users"), {
+        name,
+        aadhaar,
+        phoneNumber:fullPhoneNumber,
+        email,
+        password, // Store securely (hash in production)
+        createdAt: new Date(),
+      });
+      console.log("Document written with ID: ", docRef.id);
+      alert("Signup successful!");
+      navigation.navigate("VenueOptions");
+      setName("");
+      setAadhaar("");
+      setPhoneNumber("");
+      setEmail("");
+      setPassword("");
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      alert("Error saving data. Please try again.");
+    }
   };
 
-  const handleSignUp = () => {
-    console.log('Navigate to Signup screen');
+  const handleLogin = () => {
+    console.log("Navigate to Login screen");
   };
+
+  const closeModal = () => setIsModalVisible(false);
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={styles.mainContainer} keyboardShouldPersistTaps='handled'>
-        <Image
-          source={require("./../assets/images/logo_small.png")}
-          style={styles.image}
-          accessible={true}
-          accessibilityLabel="Brand Logo"
-          accessibilityHint="Tap to open the home page"
-        />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={styles.mainContainer}>
+          {/* Fixed logo */}
+          {/* <Image
+            source={require("./../assets/images/logo_small.png")}
+            style={styles.image}
+            accessible={true}
+            accessibilityLabel="Brand Logo"
+          /> */}
 
-        <View style={[styles.container, { height: height * 0.65 }]}>
-          <Text style={styles.loginText}>SignUp</Text>
+          <View style={styles.blackContainer}>
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <Text style={styles.signupText}>Please Enter your Details</Text>
 
-          <View style={styles.inputWrapper}>
-            <Text style={styles.registeredText}>FULL NAME</Text>
-            <TextInput
-              style={styles.inputBox}
-              placeholder="Enter your full name"
-              value={name}
-              onChangeText={(text) => setName(text)}
-              accessible={true}
-              accessibilityLabel="Name Input"
-              accessibilityHint="Enter your full name"
-            />
-          </View>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.registeredText}>FULL NAME</Text>
+                <TextInput
+                  style={styles.inputBox}
+                  placeholder="Enter your full name"
+                  value={name}
+                  onChangeText={setName}
+                />
+              </View>
 
-          <View style={styles.inputWrapper}>
-            <Text style={styles.registeredText}>EMAIL ADDRESS</Text>
-            <TextInput
-              style={styles.inputBox}
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={(text) => setEmail(text)}
-              keyboardType="email-address"
-              accessible={true}
-              accessibilityLabel="Email Input"
-              accessibilityHint="Enter your email address"
-            />
-          </View>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.registeredText}>AADHAAR NUMBER</Text>
+                <TextInput
+                  style={styles.inputBox}
+                  placeholder="Enter your Aadhaar number"
+                  value={aadhaar}
+                  onChangeText={setAadhaar}
+                  maxLength={12}
+                />
+              </View>
 
-          <View style={styles.inputWrapper}>
-            <Text style={styles.registeredText}>REGISTERED PHONE NUMBER</Text>
-            <TextInput
-              style={styles.inputBox}
-              placeholder="Enter your phone number"
-              keyboardType="phone-pad"
-              value={phoneNumber}
-              onChangeText={(text) => setPhoneNumber(text)}
-              accessible={true}
-              accessibilityLabel="Phone Number Input"
-              accessibilityHint="Enter your phone number to receive OTP"
-            />
-          </View>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.registeredText}>PHONE NUMBER</Text>
+                <TextInput
+                  style={styles.inputBox}
+                  placeholder="Enter your phone number"
+                  keyboardType="phone-pad"
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                />
+              </View>
 
-          {errorMessage ? (
-            <Text style={styles.errorText}>{errorMessage}</Text>
-          ) : null}
+              <View style={styles.inputWrapper}>
+                <Text style={styles.registeredText}>EMAIL</Text>
+                <TextInput
+                  style={styles.inputBox}
+                  placeholder="Enter your email"
+                  keyboardType="email-address"
+                  value={email}
+                  onChangeText={setEmail}
+                />
+              </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleSendOTP} accessible={true} accessibilityLabel="Send OTP Button">
-            <Text style={styles.buttonText}>Send OTP</Text>
-          </TouchableOpacity>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.registeredText}>PASSWORD</Text>
+                <TextInput
+                  style={styles.inputBox}
+                  placeholder="Enter your password"
+                  secureTextEntry={true}
+                  value={password}
+                  onChangeText={setPassword}
+                />
+              </View>
 
-          <View style={styles.signupContainer}>
-            <Text style={styles.signupText}>Don’t have an Account? </Text>
-            <TouchableOpacity onPress={handleSignUp}>
-              <Text style={styles.signupLink}>signup</Text>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={handleSendOTP}>
+                <Text style={styles.buttonText}>Sign Up</Text>
+              </TouchableOpacity>
+
+              {/* <View style={styles.signupContainer}>
+                <Text style={styles.loginText}>Already have an Account? </Text>
+                <TouchableOpacity onPress={handleLogin}>
+                  <Text style={styles.signupLink}>Login</Text>
+                </TouchableOpacity>
+              </View> */}
+            </ScrollView>
           </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+
+        <Modal
+          transparent={true}
+          visible={isModalVisible}
+          animationType="fade"
+          onRequestClose={closeModal}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalText}>{errorMessage}</Text>
+              <TouchableOpacity onPress={closeModal} style={styles.modalButton}>
+                <Text style={styles.modalButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 };
 
-const styles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFF'
-  },
-  image: {
-    position: 'absolute',
-    top: '1.5%',
-    width: '77%',
-    height: undefined,
-    aspectRatio: 1,
-    resizeMode: 'contain',
-  },
-  container: {
-    position: 'absolute',
-    bottom: 0,
-    backgroundColor: Colors.black,
-    borderTopLeftRadius: 49,
-    borderTopRightRadius: 49,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    width: '100%',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-  },
-  loginText: {
-    color: Colors.primary,
-    fontFamily: 'poppins_medium',
-    fontSize: PixelRatio.getFontScale() * 40,
-    marginTop: 5,
-  },
-  inputWrapper: {
-    width: '90%',
-    marginTop: 20,
-  },
-  registeredText: {
-    color: Colors.white,
-    fontFamily: 'poppins_medium',
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  inputBox: {
-    width: '100%',
-    height: 50,
-    backgroundColor: Colors.secondary,
-    borderRadius: 10,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.77)',
-    paddingHorizontal: 15,
-    marginBottom: 20,
-    fontSize: 16,
-    color: Colors.white,
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 14,
-    fontFamily: 'poppins_regular',
-    marginTop: 5,
-  },
-  button: {
-    width: '65%',
-    height: 50,
-    backgroundColor: Colors.primary,
-    paddingTop: '2%',
-    paddingBottom: '2%',
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: '10%',
-    marginBottom: '5%',
-  },
-  buttonText: {
-    color: Colors.black,
-    fontSize: 30,
-    fontFamily: 'poppins_medium',
-  },
-  signupContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  signupText: {
-    color: Colors.white,
-    fontSize: 14,
-  },
-  signupLink: {
-    color: Colors.primary,
-    fontSize: 14,
-    fontFamily: 'poppins_medium',
-  },
-});
+  const styles = StyleSheet.create({
+    mainContainer: {
+      flex: 1,
+      backgroundColor: "#000000", // Black background
+    },
+    image: {
+      width: 120,
+      height: 100,
+      alignSelf: "center",
+      marginVertical: 20,
+    },
+    blackContainer: {
+      flex: 1,
+      backgroundColor: "#000000", // Black background
+      borderTopLeftRadius: 30,
+      borderTopRightRadius: 30,
+      padding: 20,
+    },
+    scrollContent: {
+      paddingBottom: 20,
+    },
+    signupText: {
+      color: "#ffff00", 
+      fontSize: 18,
+      fontWeight: "bold",
+      marginBottom: 20,
+      textAlign: "center",
+    },
+    inputWrapper: {
+      marginBottom: 15,
+    },
+    registeredText: {
+      color: "#FFFFFF", // White text
+      fontSize: 14,
+      marginBottom: 5,
+    },
+    inputBox: {
+      backgroundColor: "#1C1C1C", // Dark Gray for input box background
+      borderRadius: 10,
+      padding: 10,
+      fontSize: 14,
+      color: "#FFFFFF", // White text
+    },
+    button: {
+      backgroundColor: "#ffff00", // White button
+      borderRadius: 10,
+      padding: 15,
+      alignItems: "center",
+      marginVertical: 20,
+    },
+    buttonText: {
+      color: "#000000", // Black text
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+    signupContainer: {
+      flexDirection: "row",
+      justifyContent: "center",
+    },
+    loginText: {
+      color: "#FFFFFF", // White text
+      fontSize: 14,
+    },
+    signupLink: {
+      color: "#FFFFFF", // White link
+      fontSize: 14,
+      fontWeight: "bold",
+    },
+    modalContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent black
+    },
+    modalContent: {
+      backgroundColor: "#1C1C1C", // Dark Gray for modal background
+      padding: 20,
+      borderRadius: 10,
+      width: "80%",
+      alignItems: "center",
+    },
+    modalText: {
+      color: "#FFFFFF", // White modal text
+      fontSize: 16,
+      marginBottom: 20,
+      textAlign: "center",
+    },
+    modalButton: {
+      backgroundColor: "#FFFFFF", // White button
+      borderRadius: 10,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+    },
+    modalButtonText: {
+      color: "#000000", // Black text
+      fontSize: 16,
+    },
+  });
+  
+
+// export default Signup;
 
 export default Signup;
