@@ -1,62 +1,61 @@
-// Basic Signup Page using React Native Firebase for Phone Authentication
-
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert } from 'react-native';
 import auth from '@react-native-firebase/auth';
 
 const PhoneAuthScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [code, setCode] = useState('');
-  const [confirm, setConfirm] = useState(null);
+  const [verificationId, setVerificationId] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isCodeSent, setIsCodeSent] = useState(false);
 
-  const signInWithPhoneNumber = async () => {
+  const sendVerificationCode = async () => {
     try {
       const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
-      setConfirm(confirmation);
-      Alert.alert('Code Sent', 'Please enter the code sent to your phone.');
+      setVerificationId(confirmation.verificationId);
+      setIsCodeSent(true);
+      Alert.alert('Code Sent', 'Please check your phone for the verification code.');
     } catch (error) {
-      console.error('Phone authentication failed:', error);
+      console.error('Error sending verification code:', error);
       Alert.alert('Error', error.message);
     }
   };
 
-  const confirmCode = async () => {
-    if (!confirm) return;
+  const confirmVerificationCode = async () => {
     try {
-      await confirm.confirm(code);
-      Alert.alert('Success', 'Phone number authenticated!');
+      const credential = auth.PhoneAuthProvider.credential(verificationId, verificationCode);
+      await auth().signInWithCredential(credential);
+      Alert.alert('Success', 'Phone number successfully verified!');
     } catch (error) {
-      console.error('Invalid code:', error);
-      Alert.alert('Error', 'Invalid code. Please try again.');
+      console.error('Error verifying code:', error);
+      Alert.alert('Error', 'Invalid verification code. Please try again.');
     }
   };
 
   return (
     <View style={{ padding: 20 }}>
-      <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>
-        Phone Authentication
-      </Text>
-      {!confirm ? (
+      <Text style={{ fontSize: 20, marginBottom: 20 }}>Phone Authentication</Text>
+
+      {!isCodeSent ? (
         <>
           <TextInput
-            placeholder="Enter phone number"
+            placeholder="Enter phone number (e.g., +919876543210)"
             value={phoneNumber}
             onChangeText={setPhoneNumber}
             keyboardType="phone-pad"
-            style={{ marginBottom: 20, padding: 10, borderWidth: 1, borderRadius: 5 }}
+            style={{ marginBottom: 10, borderWidth: 1, padding: 8 }}
           />
-          <Button title="Send Code" onPress={signInWithPhoneNumber} />
+          <Button title="Send Code" onPress={sendVerificationCode} />
         </>
       ) : (
         <>
           <TextInput
             placeholder="Enter verification code"
-            value={code}
-            onChangeText={setCode}
+            value={verificationCode}
+            onChangeText={setVerificationCode}
             keyboardType="number-pad"
-            style={{ marginBottom: 20, padding: 10, borderWidth: 1, borderRadius: 5 }}
+            style={{ marginBottom: 10, borderWidth: 1, padding: 8 }}
           />
-          <Button title="Verify Code" onPress={confirmCode} />
+          <Button title="Verify Code" onPress={confirmVerificationCode} />
         </>
       )}
     </View>

@@ -11,31 +11,33 @@ import CourtImages from '../components/CourtImages';
 import VenueDetails from '../components/VenueDetails';
 import LoginInitial from '../components/LoginInitial';
 import ForgotPassword from '../components/ForgotPassword'
+import LoginTest from '../components/LoginTest';
+
+
+
 
 
 const Stack = createStackNavigator();
 
 export default function Index() {
   return (
-    <Stack.Navigator initialRouteName="Welcome">
+    <Stack.Navigator initialRouteName="LoginTest">
       <Stack.Screen name="Welcome" component={Welcome} />
 
-    <Stack.Screen name="VenueOptions" component={VenueOptions} /> 
+    {/* <Stack.Screen name="VenueOptions" component={VenueOptions} />  */}
        {/* <Stack.Screen name="SelectCourt" component={SelectCourt} />  */}
-      {/* <Stack.Screen name="Logintest" component={Logintest} /> */}
-      <Stack.Screen name="VenueDetails" component={VenueDetails} options={{ headerShown: false }} />
+      <Stack.Screen name="LoginTest" component={LoginTest} />
+      {/* <Stack.Screen name="VenueDetails" component={VenueDetails} options={{ headerShown: false }} />
       <Stack.Screen name="Signup" component={Signup} options={{ headerShown: false }} />
-      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="Login" component={Login} /> */}
       {/* <Stack.Screen name="SlotManage" component={SlotManage} />  */}
       {/* <Stack.Screen name="SelectCourtEx" component={SelectCourtEx} /> */}
       {/* <Stack.Screen name="CourtImages" component={CourtImages} /> */}
-      <Stack.Screen name="LoginInitial" component={LoginInitial} /> 
-     <Stack.Screen name="ForgotPassword" component={ForgotPassword} /> 
+      {/* <Stack.Screen name="LoginInitial" component={LoginInitial} /> 
+     <Stack.Screen name="ForgotPassword" component={ForgotPassword} />  */}
 
 
     </Stack.Navigator>
   );
 }
-
-
 
